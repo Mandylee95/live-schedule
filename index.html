@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>라이브 방송 스케줄</title>
+<style>
+:root{
+  --bg:#fbfbfa; --card:#fff; --line:#e6e5e1; --line2:#f0efec;
+  --tx:#1c1b19; --tx2:#75736d; --tx3:#a3a19a;
+  --pd:#2f6394;   --pdbg:#e9f1f8;  --pdtint:#f5f9fc;
+  --cam:#8a6222;  --cambg:#f8f0e0; --camtint:#fdf9f1;
+  --host:#6a4a8c; --hostbg:#f1ebf8; --hosttint:#faf7fd;
+  --blk:#c9c7c1;  --blkbg:#f5f4f2;
+  --warn:#b4523a; --warnbg:#fbeeea; --ok:#2f7d4f; --okbg:#e8f4ec;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);color:var(--tx);font-size:14px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1400px;margin:0 auto;padding:22px 18px 70px}
+header{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:19px;font-weight:650;letter-spacing:-.02em}
+.sub{font-size:12.5px;color:var(--tx3)}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:13px}
+select,button,input{font-family:inherit;font-size:13px;color:var(--tx);background:var(--card);
+  border:1px solid var(--line);border-radius:7px;padding:7px 11px;transition:.12s}
+button,select{cursor:pointer}
+button:hover,select:hover{border-color:#cfcdc7}
+button:disabled{opacity:.45;cursor:default}
+.spacer{flex:1}
+#who{font-weight:600;border-color:#cfcdc7}
+.badge{font-size:11.5px;padding:5px 9px;border-radius:6px;font-weight:600}
+.badge.ad{color:var(--ok);background:var(--okbg)}
+.badge.lo{color:var(--warn);background:var(--warnbg)}
+.tabs{display:flex;gap:22px;border-bottom:1px solid var(--line)}
+.tabs button{border:none;background:none;padding:9px 0 11px;border-radius:0;font-size:14px;
+  color:var(--tx3);border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500}
+.tabs button.on{color:var(--tx);border-bottom-color:var(--tx);font-weight:650}
+.tabs .cnt{font-size:11.5px;color:var(--tx3);margin-left:5px}
+.hint{font-size:12.5px;color:var(--tx2);background:var(--card);border:1px solid var(--line2);
+  border-radius:8px;padding:9px 12px;margin:13px 0;display:flex;gap:15px;flex-wrap:wrap;align-items:center}
+.hint b{font-weight:600;color:var(--tx)}
+.hint.alert{background:var(--warnbg);border-color:#f0d9d2;color:var(--warn)}
+.lg{display:inline-flex;align-items:center;gap:5px;font-size:11.5px}
+.sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+.scroll{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--card);max-height:72vh}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th,td{border-bottom:1px solid var(--line2);border-right:1px solid var(--line2);padding:0;text-align:center;white-space:nowrap}
+thead th{position:sticky;top:0;z-index:3;background:var(--card);border-bottom:1px solid var(--line);
+  font-weight:600;font-size:12px;color:var(--tx2)}
+.c-show{position:sticky;left:0;z-index:2;background:var(--card);text-align:left;min-width:200px;border-right:1px solid var(--line)}
+thead .c-show{z-index:4}
+.grp th{font-size:10.5px;letter-spacing:.08em;font-weight:700;padding:6px 0}
+.g-PD{background:var(--pdbg);color:var(--pd)}
+.g-CAM{background:var(--cambg);color:var(--cam)}
+.g-HOST{background:var(--hostbg);color:var(--host)}
+.nm{padding:8px 6px;line-height:1.35}
+.nm .n{font-size:12.5px;font-weight:600}
+.nm .m{font-size:10.5px;margin-top:2px;color:var(--tx3)}
+th.h-PD{border-top:2px solid var(--pd)} th.h-CAM{border-top:2px solid var(--cam)}
+th.h-HOST{border-top:2px solid var(--host)}
+th.h-PD .m{color:var(--pd)} th.h-CAM .m{color:var(--cam)} th.h-HOST .m{color:var(--host)}
+th.me{background:#fffdf5} th.me .n{text-decoration:underline;text-underline-offset:3px}
+.showcell{padding:9px 12px}
+.d{font-size:13px;font-weight:600;letter-spacing:-.01em}
+.d .w{color:var(--tx3);font-weight:500;margin-left:3px}
+.t{font-size:11.5px;color:var(--tx3);margin-top:1px}
+.ti{font-size:12.5px;color:var(--tx2);margin-top:4px;max-width:210px;overflow:hidden;text-overflow:ellipsis}
+.ti .br{color:var(--tx3);font-size:11px}
+tbody tr:hover .c-show{background:#fafaf9}
+td.p-PD{background:var(--pdtint)} td.p-CAM{background:var(--camtint)} td.p-HOST{background:var(--hosttint)}
+td.people{min-width:64px}
+.cell{width:100%;height:46px;border:none;background:none;border-radius:0;padding:0;font-size:13px;
+  color:var(--tx3);display:flex;align-items:center;justify-content:center;font-weight:500}
+.cell.open{cursor:pointer}
+.cell.open:hover{background:rgba(0,0,0,.05);color:var(--tx2)}
+.cell.mine{font-weight:700;color:#fff;cursor:pointer}
+.cell.mine.r-PD{background:var(--pd)} .cell.mine.r-CAM{background:var(--cam)}
+.cell.mine.r-HOST{background:var(--host)}
+.cell.mine:hover{opacity:.85}
+.cell.other{font-weight:600;font-size:11.5px;color:var(--tx2)}
+.cell.other.r-PD{background:var(--pdbg)} .cell.other.r-CAM{background:var(--cambg)}
+.cell.other.r-HOST{background:var(--hostbg)}
+.cell.blocked{background:var(--blkbg);color:var(--blk);cursor:not-allowed}
+.cell.locked{cursor:not-allowed;color:#dad8d3}
+.st{padding:7px 10px;text-align:left;min-width:150px}
+.pill{display:inline-block;font-size:11px;padding:2px 7px;border-radius:20px;margin:1px 3px 1px 0;font-weight:600}
+.pill.f-PD{background:var(--pdbg);color:var(--pd)}
+.pill.f-CAM{background:var(--cambg);color:var(--cam)}
+.pill.f-HOST{background:var(--hostbg);color:var(--host)}
+.pill.miss{background:var(--warnbg);color:var(--warn)}
+tr.ready .c-show{box-shadow:inset 3px 0 0 var(--ok)}
+.empty{padding:40px;text-align:center;color:var(--tx3);font-size:13px}
+.note{font-size:11.5px;color:var(--tx3);margin-top:11px;line-height:1.6}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#1c1b19;color:#fff;
+  padding:11px 18px;border-radius:9px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.18);
+  opacity:0;pointer-events:none;transition:.22s;z-index:50;max-width:88vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(-4px)}
+/* ---- 모바일 카드 뷰 ---- */
+#cards{display:none}
+#cards.on{display:block}
+.scroll.off{display:none}
+.mgroup{font-size:11px;letter-spacing:.06em;font-weight:700;color:var(--tx3);padding:14px 2px 7px}
+.card2{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:13px 14px;margin-bottom:9px}
+.card2.ready{border-color:#cbe0d4;background:#fcfefd}
+.c2h{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.c2d{font-size:16px;font-weight:700;letter-spacing:-.02em}
+.c2d .w{color:var(--tx3);font-weight:600;font-size:13.5px;margin-left:2px}
+.c2tm{font-size:12.5px;color:var(--tx2)}
+.c2t{font-size:13.5px;color:var(--tx);margin-top:4px;font-weight:500}
+.c2t .br{color:var(--tx3);font-size:12px;font-weight:400}
+.c2r{display:flex;align-items:center;gap:9px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line2)}
+.rchip{font-size:10.5px;font-weight:700;padding:4px 0;border-radius:20px;flex:none;width:56px;text-align:center}
+.rchip.r-PD{background:var(--pdbg);color:var(--pd)}
+.rchip.r-CAM{background:var(--cambg);color:var(--cam)}
+.rchip.r-HOST{background:var(--hostbg);color:var(--host)}
+.c2n{font-size:13px;font-weight:600;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c2n.none{color:var(--tx3);font-weight:500}
+.act{margin-left:auto;flex:none;padding:9px 15px;border-radius:9px;font-size:12.5px;font-weight:650;
+  border:1px solid var(--line);background:var(--card);color:var(--tx)}
+.act.go{background:var(--tx);color:#fff;border-color:var(--tx)}
+.act.mine{color:#fff;border-color:transparent}
+.act.mine.r-PD{background:var(--pd)} .act.mine.r-CAM{background:var(--cam)} .act.mine.r-HOST{background:var(--host)}
+.act.off{background:var(--blkbg);color:var(--blk);border-color:transparent}
+/* ---- 인력 관리 모달 ---- */
+.ov{position:fixed;inset:0;background:rgba(28,27,25,.34);display:none;align-items:center;
+  justify-content:center;z-index:60;padding:18px}
+.ov.on{display:flex}
+.modal{background:var(--card);border-radius:13px;width:100%;max-width:460px;max-height:86vh;
+  display:flex;flex-direction:column;box-shadow:0 14px 44px rgba(0,0,0,.2)}
+.mh{padding:16px 18px 13px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:9px}
+.mh h2{font-size:15.5px;font-weight:650}
+.mh .x{margin-left:auto;border:none;background:none;font-size:19px;color:var(--tx3);padding:2px 6px;line-height:1}
+.mh .x:hover{color:var(--tx)}
+.mb{overflow:auto;padding:6px 12px 12px}
+.rowh{font-size:10.5px;letter-spacing:.08em;font-weight:700;padding:12px 6px 6px;color:var(--tx3)}
+.rowh.r-PD{color:var(--pd)} .rowh.r-CAM{color:var(--cam)} .rowh.r-HOST{color:var(--host)}
+.row{display:flex;gap:6px;align-items:center;padding:3px 0}
+.row input{flex:1;min-width:0;padding:7px 10px}
+.row input:focus{outline:none;border-color:#b9b7b1}
+.row select{padding:7px 8px;font-size:12.5px}
+.row .del{border:none;background:none;color:var(--tx3);padding:6px 8px;font-size:15px;line-height:1;border-radius:6px}
+.row .del:hover{background:var(--warnbg);color:var(--warn)}
+.mf{border-top:1px solid var(--line2);padding:12px;display:flex;gap:6px;align-items:center;background:#fcfcfb;
+  border-radius:0 0 13px 13px}
+.mf input{flex:1;min-width:0;padding:7px 10px}
+.mf .add{background:var(--tx);color:#fff;border-color:var(--tx);font-weight:600;padding:7px 14px}
+.mf .add:hover{opacity:.86}
+.mnote{font-size:11px;color:var(--tx3);padding:10px 6px 2px;line-height:1.6}
+.modal.wide{max-width:540px}
+.scard{border:1px solid var(--line2);border-radius:9px;padding:9px;margin:7px 0;background:#fdfdfc}
+.scard.done{border-color:#cfe3d6;background:#fafdfb}
+.sline{display:flex;gap:6px;align-items:center}
+.sline+.sline{margin-top:6px}
+.scard input{padding:6px 9px;font-size:12.5px;min-width:0}
+.scard input:focus{outline:none;border-color:#b9b7b1}
+.scard .i-date{width:130px;flex:none}
+.scard .i-time{width:118px;flex:none}
+.scard .i-title{flex:1}
+.scard .i-brand{width:118px;flex:none}
+.scard .del{margin-left:auto;border:none;background:none;color:var(--tx3);padding:5px 7px;font-size:15px;line-height:1;border-radius:6px;flex:none}
+.scard .del:hover{background:var(--warnbg);color:var(--warn)}
+.scard .who{font-size:10.5px;color:var(--tx3);padding:6px 2px 0}
+.mf.col{flex-direction:column;align-items:stretch;gap:6px}
+.mf.col .sline{width:100%}
+@media(max-width:640px){
+  .scard .i-date{width:118px} .scard .i-time{width:100px} .scard .i-brand{width:96px}
+  .wrap{padding:14px 12px 70px}
+  h1{font-size:17px}
+  header{margin-bottom:12px}
+  .bar{gap:6px}
+  #who{flex:1 1 100%;padding:10px 12px;font-size:14px}
+  #month{flex:1 1 auto;padding:9px 10px}
+  .bar button{padding:9px 12px}
+  #mebadge:empty{display:none}
+  .tabs{gap:18px}
+  .hint{padding:10px 12px;line-height:1.6}
+  .modal{max-height:92vh}
+  .mf{padding:10px}
+  .mf.col{gap:7px}
+  .mf .add{width:100%;padding:11px}
+  .row input,.mf input,.row select{padding:9px 10px;font-size:14px}
+  .card2{padding:14px 14px 12px}
+  .act{padding:11px 16px;font-size:13px}
+  .rchip{width:52px}
+}
+@media(max-width:640px){.wrap{padding:14px 10px 60px}.c-show{min-width:148px}.ti{max-width:135px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>라이브 방송 스케줄</h1>
+  <span class="sub" id="sub"></span>
+</header>
+
+<div class="bar">
+  <select id="who"><option value="">— 이름을 선택하세요 —</option></select>
+  <select id="month"></select>
+  <span id="mebadge"></span>
+  <div class="spacer"></div>
+  <button id="showMgrBtn" style="display:none">방송 관리</button>
+  <button id="mgrBtn" style="display:none">인력 관리</button>
+  <button id="resetBtn" style="display:none">초기화</button>
+  <button id="viewBtn" title="표 / 카드 보기 전환">보기</button>
+  <button id="exportCsv">CSV</button>
+  <button id="adminBtn">관리자</button>
+</div>
+
+<div class="tabs">
+  <button data-tab="crew" class="on">PD · 카메라 <span class="cnt" id="c1"></span></button>
+  <button data-tab="host">쇼호스트 <span class="cnt" id="c2"></span></button>
+</div>
+
+<div class="hint" id="hint"></div>
+<div class="scroll" id="scroll"><div id="table"><div class="empty">불러오는 중…</div></div></div>
+<div id="cards"></div>
+<div class="note" id="note"></div>
+
+</div>
+
+<div class="ov" id="ov">
+  <div class="modal">
+    <div class="mh">
+      <h2>인력 관리</h2>
+      <button class="x" id="mgrClose">✕</button>
+    </div>
+    <div class="mb" id="mgrBody"></div>
+    <div class="mf">
+      <input id="newName" placeholder="새 인력 이름" maxlength="12">
+      <select id="newRole">
+        <option value="PD">PD</option>
+        <option value="CAM">카메라</option>
+        <option value="HOST">쇼호스트</option>
+      </select>
+      <button class="add" id="newAdd">추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov2">
+  <div class="modal wide">
+    <div class="mh">
+      <h2>방송 관리</h2>
+      <button class="x" id="showMgrClose">✕</button>
+    </div>
+    <div class="mb" id="showMgrBody"></div>
+    <div class="mf col">
+      <div class="sline">
+        <input id="nsDate" class="i-date" type="date">
+        <input id="nsTime" class="i-time" placeholder="14:00~16:00">
+        <input id="nsTitle" class="i-title" placeholder="방송명" maxlength="40">
+      </div>
+      <div class="sline">
+        <input id="nsBrand" class="i-title" placeholder="브랜드" maxlength="20">
+        <button class="add" id="nsAdd">방송 추가</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ==================== 설정 ==================== -->
+<script>
+var CFG = {
+  adminPin: "1234",          // 관리자 비밀번호 — 원하는 값으로 바꾸세요
+
+  // ▼ 실시간 공유를 켜려면 파이어베이스 콘솔에서 복사한 값을 붙여넣으세요.
+  //    databaseURL 이 비어 있으면 '내 브라우저 저장' 모드로 동작합니다.
+  firebase: {
+    apiKey:      "",
+    authDomain:  "",
+    databaseURL: "",
+    projectId:   ""
+  }
+};
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<!-- ============================================== -->
+
+<script>
+var CAP={PD:1,CAM:1,HOST:2};
+var ROLE={PD:'PD',CAM:'카메라',HOST:'쇼호스트'};
+var WD=['일','월','화','수','목','금','토'];
+var CLOUD=!!(CFG.firebase&&CFG.firebase.databaseURL);
+var LS='liveSched_gh_v1';
+var ST={staff:{},shows:{},picks:{}};
+var tab='crew', month='all', me='', admin=false, busy=false, db=null;
+var view=(window.innerWidth<760)?'card':'table';
+try{var vs=localStorage.getItem('ls_view');if(vs)view=vs}catch(e){}
+
+try{me=localStorage.getItem('ls_me')||''}catch(e){}
+
+/* ---------- 샘플 데이터 ---------- */
+function seed(){
+  var staff={},shows={},i=0,j=0;
+  [['김민수','PD'],['이준호','PD'],['박서현','PD'],
+   ['정우진','CAM'],['최다은','CAM'],['한지훈','CAM'],['오세영','CAM'],
+   ['윤소라','HOST'],['강예린','HOST'],['임하늘','HOST'],['서지우','HOST']]
+  .forEach(function(p){i++;staff['s'+i]={name:p[0],role:p[1],o:i}});
+  [['2026-08-03','14:00~17:00','여름 쿨링 기획전','라클레어'],
+   ['2026-08-05','20:00~22:00','프리미엄 홍삼 단독','정관장'],
+   ['2026-08-08','11:00~13:00','주말 리빙 특집','모던하우스'],
+   ['2026-08-12','19:00~21:00','신상 컬러 런칭','페리페라'],
+   ['2026-08-14','15:00~17:30','추석 선물세트 1차','CJ제일제당'],
+   ['2026-08-19','20:00~22:00','가을 신상 아우터','무신사'],
+   ['2026-08-22','13:00~15:00','주말 간편식 대전','오뚜기'],
+   ['2026-08-27','19:30~21:30','추석 선물세트 2차','CJ제일제당']]
+  .forEach(function(s){j++;shows['b'+j]={date:s[0],time:s[1],title:s[2],brand:s[3]}});
+  return {staff:staff,shows:shows,picks:{}};
+}
+
+/* ---------- 저장소 ---------- */
+var DB={
+  init:function(onChange){
+    if(CLOUD){
+      try{
+        firebase.initializeApp(CFG.firebase);
+        db=firebase.database();
+        db.ref('/').on('value',function(snap){
+          var v=snap.val();
+          if(!v||!v.staff){db.ref('/').set(seed());return}
+          ST={staff:v.staff||{},shows:v.shows||{},picks:v.picks||{}};
+          onChange();
+        },function(){toast('연결 오류 — 파이어베이스 설정을 확인하세요.')});
+      }catch(e){CLOUD=false;DB.init(onChange)}
+    }else{
+      try{var r=localStorage.getItem(LS);ST=r?JSON.parse(r):seed()}catch(e){ST=seed()}
+      onChange();
+    }
+  },
+  localSave:function(){if(!CLOUD){try{localStorage.setItem(LS,JSON.stringify(ST))}catch(e){}}},
+  claim:function(showId,role,staffId,name,cb){
+    if(CLOUD){
+      db.ref('picks/'+showId+'/'+role).transaction(function(cur){
+        cur=cur||{};
+        if(cur[staffId])return cur;
+        if(Object.keys(cur).length>=CAP[role])return;      // 정원 초과 → 취소
+        cur[staffId]={name:name,ts:Date.now()};
+        return cur;
+      },function(err,committed){cb(!err&&committed)});
+    }else{
+      ST.picks[showId]=ST.picks[showId]||{};
+      var g=ST.picks[showId][role]=ST.picks[showId][role]||{};
+      if(!g[staffId]&&Object.keys(g).length>=CAP[role]){cb(false);return}
+      g[staffId]={name:name,ts:Date.now()};
+      DB.localSave();cb(true);
+    }
+  },
+  release:function(showId,role,staffId,cb){
+    if(CLOUD)db.ref('picks/'+showId+'/'+role+'/'+staffId).remove(function(){cb(true)});
+    else{try{delete ST.picks[showId][role][staffId]}catch(e){} DB.localSave();cb(true)}
+  },
+  add:function(path,obj,cb){
+    var id=(path==='shows'?'b':'s')+Date.now().toString(36);
+    if(CLOUD)db.ref(path+'/'+id).set(obj,function(){cb&&cb()});
+    else{ST[path][id]=obj;DB.localSave();cb&&cb()}
+  },
+  rename:function(path,id,name,cb){
+    if(CLOUD)db.ref(path+'/'+id+'/name').set(name,function(){cb&&cb()});
+    else{ST[path][id].name=name;DB.localSave();cb&&cb()}
+  },
+  setShow:function(id,field,val,cb){
+    if(CLOUD)db.ref('shows/'+id+'/'+field).set(val,function(){cb&&cb()});
+    else{ST.shows[id][field]=val;DB.localSave();cb&&cb()}
+  },
+  clearShowPicks:function(showId,cb){
+    if(CLOUD)db.ref('picks/'+showId).remove(function(){cb&&cb()});
+    else{delete ST.picks[showId];DB.localSave();cb&&cb()}
+  },
+  setRole:function(id,role,cb){
+    if(CLOUD)db.ref('staff/'+id+'/role').set(role,function(){cb&&cb()});
+    else{ST.staff[id].role=role;DB.localSave();cb&&cb()}
+  },
+  remove:function(path,id,cb){
+    if(CLOUD)db.ref(path+'/'+id).remove(function(){cb&&cb()});
+    else{delete ST[path][id];DB.localSave();cb&&cb()}
+  },
+  resetAll:function(cb){
+    if(CLOUD)db.ref('/').set(seed(),function(){cb&&cb()});
+    else{ST=seed();DB.localSave();cb&&cb()}
+  }
+};
+
+/* ---------- 헬퍼 ---------- */
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function staffArr(){return Object.keys(ST.staff).map(function(k){
+  var s=ST.staff[k];return {id:k,name:s.name,role:s.role,o:s.o||0}})
+  .sort(function(a,b){return (a.o||0)-(b.o||0)})}
+function showArr(){return Object.keys(ST.shows).map(function(k){
+  var s=ST.shows[k];return {id:k,date:s.date,time:s.time,title:s.title,brand:s.brand}})}
+function taken(showId,role){
+  var g=(ST.picks[showId]||{})[role]||{};
+  return Object.keys(g).sort(function(a,b){return (g[a].ts||0)-(g[b].ts||0)})}
+function nameOf(id){return ST.staff[id]?ST.staff[id].name:'(삭제됨)'}
+function cols(){var a=staffArr();return tab==='crew'
+  ? a.filter(function(s){return s.role==='PD'}).concat(a.filter(function(s){return s.role==='CAM'}))
+  : a.filter(function(s){return s.role==='HOST'})}
+function roles(){return tab==='crew'?['PD','CAM']:['HOST']}
+function rowsOf(){return showArr().filter(function(s){return month==='all'||String(s.date).slice(0,7)===month})
+  .sort(function(a,b){return String(a.date).localeCompare(String(b.date))||String(a.time).localeCompare(String(b.time))})}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');
+  clearTimeout(t._x);t._x=setTimeout(function(){t.classList.remove('on')},3200)}
+
+/* ---------- 렌더 ---------- */
+function render(){
+  var all=staffArr(), cs=cols();
+
+  var w=document.getElementById('who');
+  var sig=all.length+'_'+all.map(function(s){return s.name}).join();
+  if(w.dataset.n!==sig){
+    var h='<option value="">— 이름을 선택하세요 —</option>';
+    ['PD','CAM','HOST'].forEach(function(r){
+      var g=all.filter(function(s){return s.role===r});
+      if(g.length)h+='<optgroup label="'+ROLE[r]+'">'+g.map(function(s){
+        return '<option value="'+s.id+'">'+esc(s.name)+'</option>'}).join('')+'</optgroup>'});
+    w.innerHTML=h; w.dataset.n=sig;
+  }
+  w.value=me;
+  document.getElementById('mebadge').innerHTML=
+    (admin?'<span class="badge ad">관리자</span> ':'')+
+    (CLOUD?'':'<span class="badge lo">내 브라우저 저장</span>');
+  document.getElementById('showMgrBtn').style.display=admin?'':'none';
+  document.getElementById('mgrBtn').style.display=admin?'':'none';
+  document.getElementById('resetBtn').style.display=admin?'':'none';
+  if(document.getElementById('ov').classList.contains('on'))renderMgr();
+  if(document.getElementById('ov2').classList.contains('on'))renderShowMgr();
+
+  var ms=[];showArr().forEach(function(s){var m=String(s.date).slice(0,7);if(ms.indexOf(m)<0)ms.push(m)});
+  ms.sort();
+  if(month!=='all'&&ms.indexOf(month)<0)month=ms[0]||'all';
+  var sel=document.getElementById('month');
+  sel.innerHTML='<option value="all">전체 기간</option>'+ms.map(function(m){
+    return '<option value="'+m+'">'+(+m.slice(5))+'월 · '+m.slice(0,4)+'</option>'}).join('');
+  sel.value=month;
+  var rows=rowsOf();
+
+  document.getElementById('sub').textContent=rows.length+'개 방송 · 인력 '+all.length+'명';
+  document.getElementById('c1').textContent=all.filter(function(s){return s.role!=='HOST'}).length;
+  document.getElementById('c2').textContent=all.filter(function(s){return s.role==='HOST'}).length;
+
+  var hint=document.getElementById('hint');
+  if(!me&&!admin){hint.className='hint alert';
+    hint.innerHTML='<b>먼저 위에서 본인 이름을 선택하세요.</b> 선택해야 신청할 수 있습니다.'}
+  else if(view==='card'){hint.className='hint';
+    hint.innerHTML='<b>선착순 —</b> 맡고 싶은 방송의 <b>＋ 신청</b> 을 누르세요. 정원이 차면 <b>마감</b>으로 잠깁니다. '
+      +'<b>✓ 내 자리</b> 를 다시 누르면 취소됩니다.'}
+  else{hint.className='hint';
+    hint.innerHTML=(tab==='crew'
+      ? '<b>선착순 —</b> 내 열의 <b>＋</b> 를 누르면 그 방송을 맡습니다. PD 1명·카메라 1명이 차면 나머지는 잠깁니다. 내 칸을 다시 누르면 취소.'
+        +'<span class="lg"><i class="sw" style="background:var(--pd)"></i>PD</span><span class="lg"><i class="sw" style="background:var(--cam)"></i>카메라</span>'
+      : '<b>선착순 —</b> 내 열의 <b>＋</b> 를 누르면 그 방송을 맡습니다. 쇼호스트는 <b>2명</b>까지, 다 차면 잠깁니다. 내 칸을 다시 누르면 취소.'
+        +'<span class="lg"><i class="sw" style="background:var(--host)"></i>확정</span>')
+      +'<span class="lg"><i class="sw" style="background:var(--blkbg);border:1px solid var(--line)"></i>마감</span>'}
+
+  var isCard=(view==='card');
+  document.getElementById('scroll').classList.toggle('off',isCard);
+  document.getElementById('cards').classList.toggle('on',isCard);
+  document.getElementById('viewBtn').textContent=isCard?'표 보기':'카드 보기';
+  if(isCard){renderCards(rows);return}
+
+  if(!rows.length){document.getElementById('table').innerHTML='<div class="empty">해당 기간에 방송이 없습니다.</div>';return}
+
+  var grp='<tr class="grp"><th class="c-show"></th>';
+  roles().forEach(function(r){var n=cs.filter(function(c){return c.role===r}).length;
+    if(n)grp+='<th class="g-'+r+'" colspan="'+n+'">'+ROLE[r]+' · '+CAP[r]+'명</th>'});
+  grp+='<th></th></tr>';
+
+  var head='<thead>'+grp+'<tr><th class="c-show"><div class="showcell" style="color:var(--tx3);font-size:11px">방송</div></th>'
+    +cs.map(function(p){var n=rows.filter(function(r){return taken(r.id,p.role).indexOf(p.id)>=0}).length;
+      return '<th class="people h-'+p.role+(p.id===me?' me':'')+'"'
+        +(admin?' data-edit="'+p.id+'" style="cursor:pointer" title="클릭해서 이름 수정 / 삭제"':'')
+        +'><div class="nm"><div class="n">'+esc(p.name)+(admin?' ✎':'')
+        +'</div><div class="m">'+n+'건</div></div></th>'}).join('')
+    +'<th style="min-width:150px"><div class="showcell" style="color:var(--tx3);font-size:11px;text-align:left">배정 현황</div></th></tr></thead>';
+
+  var body='<tbody>'+rows.map(function(r){
+    var dt=new Date(r.date+'T00:00:00');
+    var full=roles().every(function(x){return taken(r.id,x).length>=CAP[x]});
+    var cells=cs.map(function(p){
+      var arr=taken(r.id,p.role), mine=arr.indexOf(p.id)>=0, open=arr.length<CAP[p.role];
+      var can=admin||p.id===me, cl,tx;
+      if(mine&&can){cl='mine r-'+p.role;tx='✓ 확정'}
+      else if(mine){cl='other r-'+p.role;tx=esc(p.name)}
+      else if(!open){cl='blocked';tx='마감'}
+      else if(can){cl='open';tx='＋'}
+      else{cl='locked';tx='·'}
+      var dis=(can&&(mine||open))?'':'disabled';
+      return '<td class="people p-'+p.role+'"><button class="cell '+cl+'" data-s="'+r.id
+        +'" data-p="'+p.id+'" data-r="'+p.role+'" '+dis+'>'+tx+'</button></td>'}).join('');
+    var st=roles().map(function(role){var arr=taken(r.id,role);
+      var names=arr.map(nameOf).map(esc).join(', ');
+      if(arr.length>=CAP[role])return '<span class="pill f-'+role+'">'+ROLE[role]+' '+names+'</span>';
+      if(arr.length)return '<span class="pill f-'+role+'">'+ROLE[role]+' '+names+'</span><span class="pill miss">+'+(CAP[role]-arr.length)+'</span>';
+      return '<span class="pill miss">'+ROLE[role]+' 미정</span>'}).join('');
+    return '<tr class="'+(full?'ready':'')+'"><td class="c-show"><div class="showcell">'
+      +'<div class="d">'+(+String(r.date).slice(5,7))+'.'+(+String(r.date).slice(8))
+      +'<span class="w">('+(WD[dt.getDay()]||'')+')</span></div>'
+      +'<div class="t">'+esc(r.time)+'</div>'
+      +'<div class="ti">'+esc(r.title)+(r.brand?' <span class="br">· '+esc(r.brand)+'</span>':'')+'</div>'
+      +'</div></td>'+cells+'<td><div class="st">'+st+'</div></td></tr>'}).join('')+'</tbody>';
+
+  document.getElementById('table').innerHTML='<table>'+head+body+'</table>';
+  Array.prototype.forEach.call(document.querySelectorAll('.cell'),function(b){
+    if(!b.disabled)b.onclick=function(){click(b.dataset.s,b.dataset.p,b.dataset.r)}});
+  Array.prototype.forEach.call(document.querySelectorAll('th[data-edit]'),function(th){
+    th.onclick=function(){editPerson(th.dataset.edit)}});
+}
+
+/* ---------- 인력 수정 / 삭제 (관리자) ---------- */
+function editPerson(id){
+  var cur=nameOf(id);
+  var v=prompt('이름 수정 — 비워두고 확인을 누르면 삭제됩니다.',cur);
+  if(v===null)return;
+  v=v.trim();
+  if(v===''){
+    if(!confirm('"'+cur+'" 님을 목록에서 삭제할까요?'))return;
+    DB.remove('staff',id,function(){if(me===id){me='';try{localStorage.removeItem('ls_me')}catch(e){}}
+      if(!CLOUD)render();toast('삭제했습니다.')});
+  }else if(v!==cur){
+    DB.rename('staff',id,v,function(){if(!CLOUD)render();toast('이름을 변경했습니다.')});
+  }
+}
+
+/* ---------- 카드 뷰 (모바일) ---------- */
+function renderCards(rows){
+  var box=document.getElementById('cards');
+  if(!rows.length){box.innerHTML='<div class="empty">해당 기간에 방송이 없습니다.</div>';return}
+  var myRole=ST.staff[me]?ST.staff[me].role:null;
+  var h='', curMonth='';
+
+  rows.forEach(function(r){
+    var m=String(r.date).slice(0,7);
+    if(m!==curMonth){curMonth=m;h+='<div class="mgroup">'+(+m.slice(5))+'월</div>'}
+    var dt=new Date(r.date+'T00:00:00');
+    var full=roles().every(function(x){return taken(r.id,x).length>=CAP[x]});
+
+    h+='<div class="card2'+(full?' ready':'')+'">'
+      +'<div class="c2h"><span class="c2d">'+(+String(r.date).slice(5,7))+'.'+(+String(r.date).slice(8))
+      +'<span class="w">('+(WD[dt.getDay()]||'')+')</span></span>'
+      +'<span class="c2tm">'+esc(r.time)+'</span></div>'
+      +'<div class="c2t">'+esc(r.title)+(r.brand?' <span class="br">· '+esc(r.brand)+'</span>':'')+'</div>';
+
+    roles().forEach(function(role){
+      var arr=taken(r.id,role), mine=arr.indexOf(me)>=0, open=arr.length<CAP[role];
+      var names=arr.map(nameOf).map(esc).join(', ');
+      var label=names||'<span class="c2n none">미정</span>';
+      if(names&&open)label=names+' <span class="c2n none">· '+(CAP[role]-arr.length)+'자리 남음</span>';
+
+      var btn='';
+      if(role===myRole&&me){
+        if(mine)btn='<button class="act mine r-'+role+'" data-s="'+r.id+'" data-r="'+role+'">✓ 내 자리</button>';
+        else if(open)btn='<button class="act go" data-s="'+r.id+'" data-r="'+role+'">＋ 신청</button>';
+        else btn='<button class="act off" disabled>마감</button>';
+      }else if(!open){btn='<button class="act off" disabled>마감</button>'}
+
+      h+='<div class="c2r"><span class="rchip r-'+role+'">'+ROLE[role]+'</span>'
+        +'<span class="c2n">'+label+'</span>'+btn+'</div>';
+    });
+    h+='</div>';
+  });
+  box.innerHTML=h;
+
+  Array.prototype.forEach.call(box.querySelectorAll('.act[data-s]'),function(b){
+    b.onclick=function(){click(b.dataset.s,me,b.dataset.r)}});
+}
+
+/* ---------- 클릭 ---------- */
+function click(showId,staffId,role){
+  if(busy||!staffId)return; busy=true;
+  var nm=nameOf(staffId);
+  var mine=taken(showId,role).indexOf(staffId)>=0;
+  var done=function(ok){
+    busy=false;
+    if(!CLOUD)render();
+    if(mine)toast('취소했습니다.');
+    else if(ok)toast('신청 완료 — '+nm);
+    else toast('한발 늦었습니다. 이미 마감된 자리입니다.');
+  };
+  if(mine)DB.release(showId,role,staffId,done);
+  else DB.claim(showId,role,staffId,nm,done);
+}
+
+/* ---------- 인력 관리 모달 ---------- */
+function openMgr(){document.getElementById('ov').classList.add('on');renderMgr()}
+function closeMgr(){document.getElementById('ov').classList.remove('on')}
+
+function renderMgr(){
+  var body=document.getElementById('mgrBody');
+  if(body.querySelector('input:focus'))return;
+  var all=staffArr();
+  if(!all.length){body.innerHTML='<div class="mnote">등록된 인력이 없습니다. 아래에서 추가하세요.</div>';return}
+  var h='';
+  ['PD','CAM','HOST'].forEach(function(r){
+    var g=all.filter(function(s){return s.role===r});
+    h+='<div class="rowh r-'+r+'">'+ROLE[r]+' · '+g.length+'명</div>';
+    if(!g.length)h+='<div class="mnote" style="padding:2px 6px 4px">없음</div>';
+    g.forEach(function(s){
+      h+='<div class="row">'
+        +'<input type="text" value="'+esc(s.name)+'" data-id="'+s.id+'" maxlength="12">'
+        +'<select data-role="'+s.id+'">'
+        +['PD','CAM','HOST'].map(function(x){
+            return '<option value="'+x+'"'+(x===s.role?' selected':'')+'>'+ROLE[x]+'</option>'}).join('')
+        +'</select>'
+        +'<button class="del" data-del="'+s.id+'" title="삭제">✕</button></div>'});
+  });
+  h+='<div class="mnote">이름을 고치면 자동 저장됩니다. 역할을 바꾸거나 삭제하면 그 사람이 잡아둔 방송은 모두 해제됩니다.</div>';
+  body.innerHTML=h;
+
+  Array.prototype.forEach.call(body.querySelectorAll('input[data-id]'),function(inp){
+    inp.onchange=function(){
+      var v=inp.value.trim(); if(!v){inp.value=nameOf(inp.dataset.id);return}
+      DB.rename('staff',inp.dataset.id,v,function(){if(!CLOUD)render();toast('이름을 변경했습니다.')})};
+    inp.onkeydown=function(e){if(e.key==='Enter')inp.blur()};
+  });
+  Array.prototype.forEach.call(body.querySelectorAll('select[data-role]'),function(sel){
+    sel.onchange=function(){
+      var id=sel.dataset.role;
+      purgePicks(id,function(){DB.setRole(id,sel.value,function(){
+        if(!CLOUD){render();renderMgr()} toast('역할을 변경했습니다.')})})};
+  });
+  Array.prototype.forEach.call(body.querySelectorAll('button[data-del]'),function(b){
+    b.onclick=function(){
+      var id=b.dataset.del, nm=nameOf(id);
+      if(!confirm('"'+nm+'" 님을 목록에서 삭제할까요?\n잡아둔 방송도 함께 해제됩니다.'))return;
+      purgePicks(id,function(){DB.remove('staff',id,function(){
+        if(me===id){me='';try{localStorage.removeItem('ls_me')}catch(e){}}
+        if(!CLOUD){render();renderMgr()} toast('삭제했습니다.')})})};
+  });
+}
+
+function purgePicks(staffId,cb){
+  var jobs=[];
+  Object.keys(ST.picks||{}).forEach(function(sid){
+    Object.keys(ST.picks[sid]||{}).forEach(function(role){
+      if((ST.picks[sid][role]||{})[staffId])jobs.push([sid,role])})});
+  if(!jobs.length){cb&&cb();return}
+  var left=jobs.length;
+  jobs.forEach(function(j){DB.release(j[0],j[1],staffId,function(){if(--left===0)cb&&cb()})});
+}
+
+/* ---------- 방송 관리 모달 ---------- */
+function openShowMgr(){document.getElementById('ov2').classList.add('on');renderShowMgr()}
+function closeShowMgr(){document.getElementById('ov2').classList.remove('on')}
+
+function renderShowMgr(){
+  var body=document.getElementById('showMgrBody');
+  if(body.querySelector('input:focus'))return;
+  var list=showArr().sort(function(a,b){
+    return String(a.date).localeCompare(String(b.date))||String(a.time).localeCompare(String(b.time))});
+  if(!list.length){body.innerHTML='<div class="mnote">등록된 방송이 없습니다. 아래에서 추가하세요.</div>';return}
+
+  var h='<div class="mnote">칸을 고치면 바로 저장됩니다. 방송을 삭제하면 그 방송의 신청 내역도 함께 사라집니다.</div>';
+  var curMonth='';
+  list.forEach(function(s){
+    var m=String(s.date).slice(0,7);
+    if(m!==curMonth){curMonth=m;h+='<div class="rowh">'+(+m.slice(5))+'월 · '+m.slice(0,4)+'</div>'}
+    var full=['PD','CAM','HOST'].every(function(r){return taken(s.id,r).length>=CAP[r]});
+    var who=['PD','CAM','HOST'].map(function(r){
+      var a=taken(s.id,r);
+      return ROLE[r]+' '+(a.length?a.map(nameOf).map(esc).join('·'):'미정')}).join('  |  ');
+    h+='<div class="scard'+(full?' done':'')+'">'
+      +'<div class="sline">'
+        +'<input class="i-date" type="date" value="'+esc(s.date)+'" data-f="date" data-id="'+s.id+'">'
+        +'<input class="i-time" value="'+esc(s.time)+'" placeholder="시간" data-f="time" data-id="'+s.id+'">'
+        +'<button class="del" data-delshow="'+s.id+'" title="삭제">✕</button>'
+      +'</div>'
+      +'<div class="sline">'
+        +'<input class="i-title" value="'+esc(s.title)+'" placeholder="방송명" data-f="title" data-id="'+s.id+'" maxlength="40">'
+        +'<input class="i-brand" value="'+esc(s.brand)+'" placeholder="브랜드" data-f="brand" data-id="'+s.id+'" maxlength="20">'
+      +'</div>'
+      +'<div class="who">'+who+'</div></div>'});
+  body.innerHTML=h;
+
+  Array.prototype.forEach.call(body.querySelectorAll('input[data-f]'),function(inp){
+    inp.onchange=function(){
+      var v=inp.value.trim(), f=inp.dataset.f, id=inp.dataset.id;
+      if(f==='date'&&!/^\d{4}-\d{2}-\d{2}$/.test(v)){inp.value=ST.shows[id].date;toast('날짜 형식이 올바르지 않습니다.');return}
+      DB.setShow(id,f,v,function(){if(!CLOUD)render();toast('저장했습니다.')})};
+    inp.onkeydown=function(e){if(e.key==='Enter')inp.blur()};
+  });
+  Array.prototype.forEach.call(body.querySelectorAll('button[data-delshow]'),function(b){
+    b.onclick=function(){
+      var id=b.dataset.delshow, s=ST.shows[id];
+      if(!confirm('['+s.date+'] '+(s.title||'(무제)')+' 방송을 삭제할까요?\n신청 내역도 함께 사라집니다.'))return;
+      DB.clearShowPicks(id,function(){DB.remove('shows',id,function(){
+        if(!CLOUD){render();renderShowMgr()} toast('삭제했습니다.')})})};
+  });
+}
+
+/* ---------- 인력 이름 즉시 수정 (표 헤더) ---------- */
+function editPerson(id){
+  var cur=nameOf(id);
+  var v=prompt('이름 수정 — 비워두고 확인을 누르면 삭제됩니다.',cur);
+  if(v===null)return;
+  v=v.trim();
+  if(v===''){
+    if(!confirm('"'+cur+'" 님을 목록에서 삭제할까요?'))return;
+    purgePicks(id,function(){DB.remove('staff',id,function(){
+      if(me===id){me='';try{localStorage.removeItem('ls_me')}catch(e){}}
+      if(!CLOUD)render();toast('삭제했습니다.')})});
+  }else if(v!==cur){
+    DB.rename('staff',id,v,function(){if(!CLOUD)render();toast('이름을 변경했습니다.')});
+  }
+}
+
+/* ---------- 컨트롤 ---------- */
+document.getElementById('who').onchange=function(e){
+  me=e.target.value; try{localStorage.setItem('ls_me',me)}catch(err){}
+  var p=ST.staff[me];
+  if(p){tab=(p.role==='HOST')?'host':'crew';
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(x){
+      x.classList.toggle('on',x.dataset.tab===tab)})}
+  render()};
+document.getElementById('month').onchange=function(e){month=e.target.value;render()};
+Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){
+  b.onclick=function(){tab=b.dataset.tab;
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(x){
+      x.classList.toggle('on',x===b)});render()}});
+
+document.getElementById('adminBtn').onclick=function(){
+  if(admin){admin=false;render();toast('관리자 모드 해제');return}
+  var p=prompt('관리자 비밀번호');if(!p)return;
+  if(String(p)===String(CFG.adminPin)){admin=true;render();toast('관리자 모드 — 모든 칸 수정 가능')}
+  else toast('비밀번호가 다릅니다.')};
+
+document.getElementById('viewBtn').onclick=function(){
+  view=(view==='card')?'table':'card';
+  try{localStorage.setItem('ls_view',view)}catch(e){}
+  render()};
+
+document.getElementById('resetBtn').onclick=function(){
+  if(!confirm('모든 방송·인력·신청 내역을 지우고 샘플 상태로 되돌립니다.\n계속할까요?'))return;
+  DB.resetAll(function(){if(!CLOUD)render();toast('초기화했습니다.')})};
+
+document.getElementById('mgrBtn').onclick=openMgr;
+document.getElementById('mgrClose').onclick=closeMgr;
+document.getElementById('ov').onclick=function(e){if(e.target.id==='ov')closeMgr()};
+document.getElementById('showMgrBtn').onclick=openShowMgr;
+document.getElementById('showMgrClose').onclick=closeShowMgr;
+document.getElementById('ov2').onclick=function(e){if(e.target.id==='ov2')closeShowMgr()};
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeMgr();closeShowMgr()}});
+
+document.getElementById('newAdd').onclick=function(){
+  var i=document.getElementById('newName'), v=i.value.trim();
+  if(!v){i.focus();return}
+  var role=document.getElementById('newRole').value;
+  DB.add('staff',{name:v,role:role,o:Date.now()},function(){
+    i.value='';if(!CLOUD)render();renderMgr();toast('"'+v+'" 님을 추가했습니다.')})};
+document.getElementById('newName').onkeydown=function(e){
+  if(e.key==='Enter')document.getElementById('newAdd').click()};
+
+document.getElementById('nsAdd').onclick=function(){
+  var d=document.getElementById('nsDate'), t=document.getElementById('nsTime'),
+      ti=document.getElementById('nsTitle'), br=document.getElementById('nsBrand');
+  var date=d.value.trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){d.focus();toast('날짜를 선택하세요.');return}
+  DB.add('shows',{date:date,time:t.value.trim()||'미정',title:ti.value.trim()||'(무제)',brand:br.value.trim()},
+    function(){month=date.slice(0,7);t.value='';ti.value='';br.value='';
+      if(!CLOUD)render();renderShowMgr();toast('방송을 추가했습니다.')})};
+['nsTime','nsTitle','nsBrand'].forEach(function(id){
+  document.getElementById(id).onkeydown=function(e){
+    if(e.key==='Enter')document.getElementById('nsAdd').click()}});
+
+document.getElementById('exportCsv').onclick=function(){
+  var out='﻿날짜,시간,방송명,브랜드,PD,카메라,쇼호스트1,쇼호스트2\n';
+  rowsOf().forEach(function(r){
+    var h=taken(r.id,'HOST');
+    out+=[r.date,r.time,r.title,r.brand,
+      (taken(r.id,'PD').map(nameOf)[0]||'미정'),
+      (taken(r.id,'CAM').map(nameOf)[0]||'미정'),
+      (h[0]?nameOf(h[0]):'미정'),(h[1]?nameOf(h[1]):'미정')]
+      .map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'}).join(',')+'\n'});
+  var b=new Blob([out],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b);
+  var a=document.createElement('a');a.href=u;a.download='방송스케줄.csv';a.click();URL.revokeObjectURL(u)};
+
+document.getElementById('note').innerHTML= CLOUD
+  ? '자리가 다 찬 방송은 초록색으로 표시됩니다. 다른 사람이 잡으면 새로고침 없이 바로 반영됩니다.'
+  : '자리가 다 찬 방송은 초록색으로 표시됩니다. <b>현재는 각자 브라우저에만 저장</b>되어 서로 보이지 않습니다. 파일 안의 파이어베이스 설정을 채우면 실시간 공유가 켜집니다.';
+
+DB.init(render);
+</script>
+</body>
+</html>
