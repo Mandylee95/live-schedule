@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>라이브 방송 스케줄</title>
+<style>
+:root{
+  --bg:#fbfbfa; --card:#fff; --line:#e6e5e1; --line2:#f0efec;
+  --tx:#1c1b19; --tx2:#75736d; --tx3:#a3a19a;
+  --pd:#2f6394;   --pdbg:#e9f1f8;  --pdtint:#f5f9fc;
+  --cam:#8a6222;  --cambg:#f8f0e0; --camtint:#fdf9f1;
+  --host:#6a4a8c; --hostbg:#f1ebf8; --hosttint:#faf7fd;
+  --blk:#c9c7c1;  --blkbg:#f5f4f2;
+  --warn:#b4523a; --warnbg:#fbeeea; --ok:#2f7d4f; --okbg:#e8f4ec;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);color:var(--tx);font-size:14px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1400px;margin:0 auto;padding:22px 18px 70px}
+header{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:19px;font-weight:650;letter-spacing:-.02em}
+.sub{font-size:12.5px;color:var(--tx3)}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:13px}
+select,button,input{font-family:inherit;font-size:13px;color:var(--tx);background:var(--card);
+  border:1px solid var(--line);border-radius:7px;padding:7px 11px;transition:.12s}
+button,select{cursor:pointer}
+button:hover,select:hover{border-color:#cfcdc7}
+button:disabled{opacity:.45;cursor:default}
+.spacer{flex:1}
+#who{font-weight:600;border-color:#cfcdc7}
+.badge{font-size:11.5px;padding:5px 9px;border-radius:6px;font-weight:600}
+.badge.ad{color:var(--ok);background:var(--okbg)}
+.badge.lo{color:var(--warn);background:var(--warnbg)}
+.tabs{display:flex;gap:22px;border-bottom:1px solid var(--line)}
+.tabs button{border:none;background:none;padding:9px 0 11px;border-radius:0;font-size:14px;
+  color:var(--tx3);border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500}
+.tabs button.on{color:var(--tx);border-bottom-color:var(--tx);font-weight:650}
+.tabs .cnt{font-size:11.5px;color:var(--tx3);margin-left:5px}
+.hint{font-size:12.5px;color:var(--tx2);background:var(--card);border:1px solid var(--line2);
+  border-radius:8px;padding:9px 12px;margin:13px 0;display:flex;gap:15px;flex-wrap:wrap;align-items:center}
+.hint b{font-weight:600;color:var(--tx)}
+.hint.alert{background:var(--warnbg);border-color:#f0d9d2;color:var(--warn)}
+.lg{display:inline-flex;align-items:center;gap:5px;font-size:11.5px}
+.sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+.scroll{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--card);max-height:72vh}
+table{border-collapse:separate;border-spacing:0;width:100%}
+th,td{border-bottom:1px solid var(--line2);border-right:1px solid var(--line2);padding:0;text-align:center;white-space:nowrap}
+thead th{position:sticky;top:0;z-index:3;background:var(--card);border-bottom:1px solid var(--line);
+  font-weight:600;font-size:12px;color:var(--tx2)}
+.c-show{position:sticky;left:0;z-index:2;background:var(--card);text-align:left;min-width:200px;border-right:1px solid var(--line)}
+thead .c-show{z-index:4}
+.grp th{font-size:10.5px;letter-spacing:.08em;font-weight:700;padding:6px 0}
+.g-PD{background:var(--pdbg);color:var(--pd)}
+.g-CAM{background:var(--cambg);color:var(--cam)}
+.g-HOST{background:var(--hostbg);color:var(--host)}
+.nm{padding:8px 6px;line-height:1.35}
+.nm .n{font-size:12.5px;font-weight:600}
+.nm .m{font-size:10.5px;margin-top:2px;color:var(--tx3)}
+th.h-PD{border-top:2px solid var(--pd)} th.h-CAM{border-top:2px solid var(--cam)}
+th.h-HOST{border-top:2px solid var(--host)}
+th.h-PD .m{color:var(--pd)} th.h-CAM .m{color:var(--cam)} th.h-HOST .m{color:var(--host)}
+th.me{background:#fffdf5} th.me .n{text-decoration:underline;text-underline-offset:3px}
+.showcell{padding:9px 12px}
+.d{font-size:13px;font-weight:600;letter-spacing:-.01em}
+.d .w{color:var(--tx3);font-weight:500;margin-left:3px}
+.t{font-size:11.5px;color:var(--tx3);margin-top:1px}
+.ti{font-size:12.5px;color:var(--tx2);margin-top:4px;max-width:210px;overflow:hidden;text-overflow:ellipsis}
+.ti .br{color:var(--tx3);font-size:11px}
+tbody tr:hover .c-show{background:#fafaf9}
+td.p-PD{background:var(--pdtint)} td.p-CAM{background:var(--camtint)} td.p-HOST{background:var(--hosttint)}
+td.people{min-width:64px}
+.cell{width:100%;height:46px;border:none;background:none;border-radius:0;padding:0;font-size:13px;
+  color:var(--tx3);display:flex;align-items:center;justify-content:center;font-weight:500}
+.cell.open{cursor:pointer}
+.cell.open:hover{background:rgba(0,0,0,.05);color:var(--tx2)}
+.cell.mine{font-weight:700;color:#fff;cursor:pointer}
+.cell.mine.r-PD{background:var(--pd)} .cell.mine.r-CAM{background:var(--cam)}
+.cell.mine.r-HOST{background:var(--host)}
+.cell.mine:hover{opacity:.85}
+.cell.other{font-weight:600;font-size:11.5px;color:var(--tx2)}
+.cell.other.r-PD{background:var(--pdbg)} .cell.other.r-CAM{background:var(--cambg)}
+.cell.other.r-HOST{background:var(--hostbg)}
+.cell.blocked{background:var(--blkbg);color:var(--blk);cursor:not-allowed}
+.cell.locked{cursor:not-allowed;color:#dad8d3}
+.st{padding:7px 10px;text-align:left;min-width:150px}
+.pill{display:inline-block;font-size:11px;padding:2px 7px;border-radius:20px;margin:1px 3px 1px 0;font-weight:600}
+.pill.f-PD{background:var(--pdbg);color:var(--pd)}
+.pill.f-CAM{background:var(--cambg);color:var(--cam)}
+.pill.f-HOST{background:var(--hostbg);color:var(--host)}
+.pill.miss{background:var(--warnbg);color:var(--warn)}
+tr.ready .c-show{box-shadow:inset 3px 0 0 var(--ok)}
+.empty{padding:40px;text-align:center;color:var(--tx3);font-size:13px}
+.note{font-size:11.5px;color:var(--tx3);margin-top:11px;line-height:1.6}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#1c1b19;color:#fff;
+  padding:11px 18px;border-radius:9px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.18);
+  opacity:0;pointer-events:none;transition:.22s;z-index:50;max-width:88vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(-4px)}
+@media(max-width:640px){.wrap{padding:14px 10px 60px}.c-show{min-width:148px}.ti{max-width:135px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>라이브 방송 스케줄</h1>
+  <span class="sub" id="sub"></span>
+</header>
+
+<div class="bar">
+  <select id="who"><option value="">— 이름을 선택하세요 —</option></select>
+  <select id="month"></select>
+  <span id="mebadge"></span>
+  <div class="spacer"></div>
+  <button id="addShow" style="display:none">+ 방송</button>
+  <button id="addPerson" style="display:none">+ 인력</button>
+  <button id="exportCsv">CSV</button>
+  <button id="adminBtn">관리자</button>
+</div>
+
+<div class="tabs">
+  <button data-tab="crew" class="on">PD · 카메라 <span class="cnt" id="c1"></span></button>
+  <button data-tab="host">쇼호스트 <span class="cnt" id="c2"></span></button>
+</div>
+
+<div class="hint" id="hint"></div>
+<div class="scroll"><div id="table"><div class="empty">불러오는 중…</div></div></div>
+<div class="note" id="note"></div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- ==================== 설정 ==================== -->
+<script>
+var CFG = {
+  adminPin: "1234",          // 관리자 비밀번호 — 원하는 값으로 바꾸세요
+
+  // ▼ 실시간 공유를 켜려면 파이어베이스 콘솔에서 복사한 값을 붙여넣으세요.
+  //    databaseURL 이 비어 있으면 '내 브라우저 저장' 모드로 동작합니다.
+  firebase: {
+    apiKey:      "",
+    authDomain:  "",
+    databaseURL: "",
+    projectId:   ""
+  }
+};
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<!-- ============================================== -->
+
+<script>
+var CAP={PD:1,CAM:1,HOST:2};
+var ROLE={PD:'PD',CAM:'카메라',HOST:'쇼호스트'};
+var WD=['일','월','화','수','목','금','토'];
+var CLOUD=!!(CFG.firebase&&CFG.firebase.databaseURL);
+var LS='liveSched_gh_v1';
+var ST={staff:{},shows:{},picks:{}};
+var tab='crew', month='all', me='', admin=false, busy=false, db=null;
+
+try{me=localStorage.getItem('ls_me')||''}catch(e){}
+
+/* ---------- 샘플 데이터 ---------- */
+function seed(){
+  var staff={},shows={},i=0,j=0;
+  [['김민수','PD'],['이준호','PD'],['박서현','PD'],
+   ['정우진','CAM'],['최다은','CAM'],['한지훈','CAM'],['오세영','CAM'],
+   ['윤소라','HOST'],['강예린','HOST'],['임하늘','HOST'],['서지우','HOST']]
+  .forEach(function(p){i++;staff['s'+i]={name:p[0],role:p[1],o:i}});
+  [['2026-08-03','14:00~17:00','여름 쿨링 기획전','라클레어'],
+   ['2026-08-05','20:00~22:00','프리미엄 홍삼 단독','정관장'],
+   ['2026-08-08','11:00~13:00','주말 리빙 특집','모던하우스'],
+   ['2026-08-12','19:00~21:00','신상 컬러 런칭','페리페라'],
+   ['2026-08-14','15:00~17:30','추석 선물세트 1차','CJ제일제당'],
+   ['2026-08-19','20:00~22:00','가을 신상 아우터','무신사'],
+   ['2026-08-22','13:00~15:00','주말 간편식 대전','오뚜기'],
+   ['2026-08-27','19:30~21:30','추석 선물세트 2차','CJ제일제당']]
+  .forEach(function(s){j++;shows['b'+j]={date:s[0],time:s[1],title:s[2],brand:s[3]}});
+  return {staff:staff,shows:shows,picks:{}};
+}
+
+/* ---------- 저장소 ---------- */
+var DB={
+  init:function(onChange){
+    if(CLOUD){
+      try{
+        firebase.initializeApp(CFG.firebase);
+        db=firebase.database();
+        db.ref('/').on('value',function(snap){
+          var v=snap.val();
+          if(!v||!v.staff){db.ref('/').set(seed());return}
+          ST={staff:v.staff||{},shows:v.shows||{},picks:v.picks||{}};
+          onChange();
+        },function(){toast('연결 오류 — 파이어베이스 설정을 확인하세요.')});
+      }catch(e){CLOUD=false;DB.init(onChange)}
+    }else{
+      try{var r=localStorage.getItem(LS);ST=r?JSON.parse(r):seed()}catch(e){ST=seed()}
+      onChange();
+    }
+  },
+  localSave:function(){if(!CLOUD){try{localStorage.setItem(LS,JSON.stringify(ST))}catch(e){}}},
+  claim:function(showId,role,staffId,name,cb){
+    if(CLOUD){
+      db.ref('picks/'+showId+'/'+role).transaction(function(cur){
+        cur=cur||{};
+        if(cur[staffId])return cur;
+        if(Object.keys(cur).length>=CAP[role])return;      // 정원 초과 → 취소
+        cur[staffId]={name:name,ts:Date.now()};
+        return cur;
+      },function(err,committed){cb(!err&&committed)});
+    }else{
+      ST.picks[showId]=ST.picks[showId]||{};
+      var g=ST.picks[showId][role]=ST.picks[showId][role]||{};
+      if(!g[staffId]&&Object.keys(g).length>=CAP[role]){cb(false);return}
+      g[staffId]={name:name,ts:Date.now()};
+      DB.localSave();cb(true);
+    }
+  },
+  release:function(showId,role,staffId,cb){
+    if(CLOUD)db.ref('picks/'+showId+'/'+role+'/'+staffId).remove(function(){cb(true)});
+    else{try{delete ST.picks[showId][role][staffId]}catch(e){} DB.localSave();cb(true)}
+  },
+  add:function(path,obj,cb){
+    var id=(path==='shows'?'b':'s')+Date.now().toString(36);
+    if(CLOUD)db.ref(path+'/'+id).set(obj,function(){cb&&cb()});
+    else{ST[path][id]=obj;DB.localSave();cb&&cb()}
+  }
+};
+
+/* ---------- 헬퍼 ---------- */
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function staffArr(){return Object.keys(ST.staff).map(function(k){
+  var s=ST.staff[k];return {id:k,name:s.name,role:s.role,o:s.o||0}})
+  .sort(function(a,b){return (a.o||0)-(b.o||0)})}
+function showArr(){return Object.keys(ST.shows).map(function(k){
+  var s=ST.shows[k];return {id:k,date:s.date,time:s.time,title:s.title,brand:s.brand}})}
+function taken(showId,role){
+  var g=(ST.picks[showId]||{})[role]||{};
+  return Object.keys(g).sort(function(a,b){return (g[a].ts||0)-(g[b].ts||0)})}
+function nameOf(id){return ST.staff[id]?ST.staff[id].name:'(삭제됨)'}
+function cols(){var a=staffArr();return tab==='crew'
+  ? a.filter(function(s){return s.role==='PD'}).concat(a.filter(function(s){return s.role==='CAM'}))
+  : a.filter(function(s){return s.role==='HOST'})}
+function roles(){return tab==='crew'?['PD','CAM']:['HOST']}
+function rowsOf(){return showArr().filter(function(s){return month==='all'||String(s.date).slice(0,7)===month})
+  .sort(function(a,b){return String(a.date).localeCompare(String(b.date))||String(a.time).localeCompare(String(b.time))})}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');
+  clearTimeout(t._x);t._x=setTimeout(function(){t.classList.remove('on')},3200)}
+
+/* ---------- 렌더 ---------- */
+function render(){
+  var all=staffArr(), cs=cols();
+
+  var w=document.getElementById('who');
+  var sig=all.length+'_'+all.map(function(s){return s.name}).join();
+  if(w.dataset.n!==sig){
+    var h='<option value="">— 이름을 선택하세요 —</option>';
+    ['PD','CAM','HOST'].forEach(function(r){
+      var g=all.filter(function(s){return s.role===r});
+      if(g.length)h+='<optgroup label="'+ROLE[r]+'">'+g.map(function(s){
+        return '<option value="'+s.id+'">'+esc(s.name)+'</option>'}).join('')+'</optgroup>'});
+    w.innerHTML=h; w.dataset.n=sig;
+  }
+  w.value=me;
+  document.getElementById('mebadge').innerHTML=
+    (admin?'<span class="badge ad">관리자</span> ':'')+
+    (CLOUD?'':'<span class="badge lo">내 브라우저 저장</span>');
+  document.getElementById('addShow').style.display=admin?'':'none';
+  document.getElementById('addPerson').style.display=admin?'':'none';
+
+  var ms=[];showArr().forEach(function(s){var m=String(s.date).slice(0,7);if(ms.indexOf(m)<0)ms.push(m)});
+  ms.sort();
+  if(month!=='all'&&ms.indexOf(month)<0)month=ms[0]||'all';
+  var sel=document.getElementById('month');
+  sel.innerHTML='<option value="all">전체 기간</option>'+ms.map(function(m){
+    return '<option value="'+m+'">'+(+m.slice(5))+'월 · '+m.slice(0,4)+'</option>'}).join('');
+  sel.value=month;
+  var rows=rowsOf();
+
+  document.getElementById('sub').textContent=rows.length+'개 방송 · 인력 '+all.length+'명';
+  document.getElementById('c1').textContent=all.filter(function(s){return s.role!=='HOST'}).length;
+  document.getElementById('c2').textContent=all.filter(function(s){return s.role==='HOST'}).length;
+
+  var hint=document.getElementById('hint');
+  if(!me&&!admin){hint.className='hint alert';
+    hint.innerHTML='<b>먼저 위에서 본인 이름을 선택하세요.</b> 선택해야 신청할 수 있습니다.'}
+  else{hint.className='hint';
+    hint.innerHTML=(tab==='crew'
+      ? '<b>선착순 —</b> 내 열의 <b>＋</b> 를 누르면 그 방송을 맡습니다. PD 1명·카메라 1명이 차면 나머지는 잠깁니다. 내 칸을 다시 누르면 취소.'
+        +'<span class="lg"><i class="sw" style="background:var(--pd)"></i>PD</span><span class="lg"><i class="sw" style="background:var(--cam)"></i>카메라</span>'
+      : '<b>선착순 —</b> 내 열의 <b>＋</b> 를 누르면 그 방송을 맡습니다. 쇼호스트는 <b>2명</b>까지, 다 차면 잠깁니다. 내 칸을 다시 누르면 취소.'
+        +'<span class="lg"><i class="sw" style="background:var(--host)"></i>확정</span>')
+      +'<span class="lg"><i class="sw" style="background:var(--blkbg);border:1px solid var(--line)"></i>마감</span>'}
+
+  if(!rows.length){document.getElementById('table').innerHTML='<div class="empty">해당 기간에 방송이 없습니다.</div>';return}
+
+  var grp='<tr class="grp"><th class="c-show"></th>';
+  roles().forEach(function(r){var n=cs.filter(function(c){return c.role===r}).length;
+    if(n)grp+='<th class="g-'+r+'" colspan="'+n+'">'+ROLE[r]+' · '+CAP[r]+'명</th>'});
+  grp+='<th></th></tr>';
+
+  var head='<thead>'+grp+'<tr><th class="c-show"><div class="showcell" style="color:var(--tx3);font-size:11px">방송</div></th>'
+    +cs.map(function(p){var n=rows.filter(function(r){return taken(r.id,p.role).indexOf(p.id)>=0}).length;
+      return '<th class="people h-'+p.role+(p.id===me?' me':'')+'"><div class="nm"><div class="n">'
+        +esc(p.name)+'</div><div class="m">'+n+'건</div></div></th>'}).join('')
+    +'<th style="min-width:150px"><div class="showcell" style="color:var(--tx3);font-size:11px;text-align:left">배정 현황</div></th></tr></thead>';
+
+  var body='<tbody>'+rows.map(function(r){
+    var dt=new Date(r.date+'T00:00:00');
+    var full=roles().every(function(x){return taken(r.id,x).length>=CAP[x]});
+    var cells=cs.map(function(p){
+      var arr=taken(r.id,p.role), mine=arr.indexOf(p.id)>=0, open=arr.length<CAP[p.role];
+      var can=admin||p.id===me, cl,tx;
+      if(mine&&can){cl='mine r-'+p.role;tx='✓ 확정'}
+      else if(mine){cl='other r-'+p.role;tx=esc(p.name)}
+      else if(!open){cl='blocked';tx='마감'}
+      else if(can){cl='open';tx='＋'}
+      else{cl='locked';tx='·'}
+      var dis=(can&&(mine||open))?'':'disabled';
+      return '<td class="people p-'+p.role+'"><button class="cell '+cl+'" data-s="'+r.id
+        +'" data-p="'+p.id+'" data-r="'+p.role+'" '+dis+'>'+tx+'</button></td>'}).join('');
+    var st=roles().map(function(role){var arr=taken(r.id,role);
+      var names=arr.map(nameOf).map(esc).join(', ');
+      if(arr.length>=CAP[role])return '<span class="pill f-'+role+'">'+ROLE[role]+' '+names+'</span>';
+      if(arr.length)return '<span class="pill f-'+role+'">'+ROLE[role]+' '+names+'</span><span class="pill miss">+'+(CAP[role]-arr.length)+'</span>';
+      return '<span class="pill miss">'+ROLE[role]+' 미정</span>'}).join('');
+    return '<tr class="'+(full?'ready':'')+'"><td class="c-show"><div class="showcell">'
+      +'<div class="d">'+(+String(r.date).slice(5,7))+'.'+(+String(r.date).slice(8))
+      +'<span class="w">('+(WD[dt.getDay()]||'')+')</span></div>'
+      +'<div class="t">'+esc(r.time)+'</div>'
+      +'<div class="ti">'+esc(r.title)+(r.brand?' <span class="br">· '+esc(r.brand)+'</span>':'')+'</div>'
+      +'</div></td>'+cells+'<td><div class="st">'+st+'</div></td></tr>'}).join('')+'</tbody>';
+
+  document.getElementById('table').innerHTML='<table>'+head+body+'</table>';
+  Array.prototype.forEach.call(document.querySelectorAll('.cell'),function(b){
+    if(!b.disabled)b.onclick=function(){click(b.dataset.s,b.dataset.p,b.dataset.r)}});
+}
+
+/* ---------- 클릭 ---------- */
+function click(showId,staffId,role){
+  if(busy)return; busy=true;
+  var nm=nameOf(staffId);
+  var mine=taken(showId,role).indexOf(staffId)>=0;
+  var done=function(ok){
+    busy=false;
+    if(!CLOUD)render();
+    if(mine)toast('취소했습니다.');
+    else if(ok)toast('신청 완료 — '+nm);
+    else toast('한발 늦었습니다. 이미 마감된 자리입니다.');
+  };
+  if(mine)DB.release(showId,role,staffId,done);
+  else DB.claim(showId,role,staffId,nm,done);
+}
+
+/* ---------- 컨트롤 ---------- */
+document.getElementById('who').onchange=function(e){
+  me=e.target.value; try{localStorage.setItem('ls_me',me)}catch(err){}
+  var p=ST.staff[me];
+  if(p){tab=(p.role==='HOST')?'host':'crew';
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(x){
+      x.classList.toggle('on',x.dataset.tab===tab)})}
+  render()};
+document.getElementById('month').onchange=function(e){month=e.target.value;render()};
+Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(b){
+  b.onclick=function(){tab=b.dataset.tab;
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'),function(x){
+      x.classList.toggle('on',x===b)});render()}});
+document.getElementById('adminBtn').onclick=function(){
+  if(admin){admin=false;render();toast('관리자 모드 해제');return}
+  var p=prompt('관리자 비밀번호');if(!p)return;
+  if(String(p)===String(CFG.adminPin)){admin=true;render();toast('관리자 모드 — 모든 칸 수정 가능')}
+  else toast('비밀번호가 다릅니다.')};
+document.getElementById('addShow').onclick=function(){
+  var date=prompt('날짜 (예: 2026-08-30)');if(!date||!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
+  var time=prompt('시간 (예: 14:00~16:00)','14:00~16:00')||'';
+  var title=prompt('방송명')||'(무제)';
+  var brand=prompt('브랜드')||'';
+  DB.add('shows',{date:date,time:time,title:title,brand:brand},function(){
+    month=date.slice(0,7);render();toast('방송을 추가했습니다.')})};
+document.getElementById('addPerson').onclick=function(){
+  var name=prompt('이름');if(!name)return;
+  var role='HOST';
+  if(tab==='crew'){var r=prompt('역할 입력: PD 또는 CAM','PD');if(!r)return;
+    role=r.trim().toUpperCase()==='CAM'?'CAM':'PD'}
+  DB.add('staff',{name:name,role:role,o:Date.now()},function(){render();toast('인력을 추가했습니다.')})};
+document.getElementById('exportCsv').onclick=function(){
+  var out='﻿날짜,시간,방송명,브랜드,PD,카메라,쇼호스트1,쇼호스트2\n';
+  rowsOf().forEach(function(r){
+    var h=taken(r.id,'HOST');
+    out+=[r.date,r.time,r.title,r.brand,
+      (taken(r.id,'PD').map(nameOf)[0]||'미정'),
+      (taken(r.id,'CAM').map(nameOf)[0]||'미정'),
+      (h[0]?nameOf(h[0]):'미정'),(h[1]?nameOf(h[1]):'미정')]
+      .map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'}).join(',')+'\n'});
+  var b=new Blob([out],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b);
+  var a=document.createElement('a');a.href=u;a.download='방송스케줄.csv';a.click();URL.revokeObjectURL(u)};
+
+document.getElementById('note').innerHTML= CLOUD
+  ? '왼쪽에 초록 줄이 있는 행은 모든 자리가 채워진 방송입니다. 다른 사람이 잡으면 새로고침 없이 바로 반영됩니다.'
+  : '왼쪽에 초록 줄이 있는 행은 모든 자리가 채워진 방송입니다. <b>현재는 각자 브라우저에만 저장</b>되어 서로 보이지 않습니다. 파일 안의 파이어베이스 설정을 채우면 실시간 공유가 켜집니다.';
+
+DB.init(render);
+</script>
+</body>
+</html>
